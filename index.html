@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Excel to Markdown — Turn messy spreadsheets into AI-readable tables</title>
+<meta name="description" content="Convert Excel files with merged cells and multi-level headers into clean, structured markdown that ChatGPT, Claude and other LLMs can actually understand. Free, runs in your browser, nothing uploaded.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Excel to Markdown — AI-readable tables from messy spreadsheets">
+<meta property="og:description" content="Merged cells and multi-level headers break LLMs. This free browser tool deconstructs them into clean markdown — nothing leaves your computer.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='3' y='3' width='26' height='26' rx='6' fill='%232e7d5b'/><path d='M9 11h14M9 16h14M9 21h9' stroke='white' stroke-width='2.4' stroke-linecap='round'/></svg>">
+<style>
+  :root { --bg:#f7f6f3; --card:#fff; --ink:#1c2422; --mut:#66736d; --acc:#2e7d5b; --acc2:#1c563f; --line:#e4e1da; --pro:#8a5a2e; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#121615; --card:#1a211f; --ink:#e4e9e7; --mut:#8fa19a; --acc:#4caf8a; --acc2:#6fd0a8; --line:#283230; --pro:#c99a5e; } }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.75 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif; }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 0 20px 80px; }
+  header { padding: 18px 0; border-bottom: 1px solid var(--line); }
+  header .wrap { display:flex; justify-content:space-between; align-items:center; padding-bottom:18px; padding-top:18px; }
+  .brand { font-weight:700; letter-spacing:.02em; }
+  .brand span { color: var(--acc); }
+  nav a { color: var(--mut); text-decoration: none; margin-left: 18px; font-size: 14px; }
+  nav a:hover { color: var(--ink); }
+  .hero { padding: 56px 0 30px; }
+  h1 { font-size: clamp(26px, 5vw, 40px); line-height: 1.25; margin: 0 0 14px; font-weight: 750; letter-spacing: -0.01em; }
+  .hero p.lead { font-size: 18px; color: var(--mut); max-width: 640px; margin: 0 0 8px; }
+  .hero .badges { margin-top: 14px; font-size: 13px; color: var(--mut); }
+  .hero .badges span { margin-right: 14px; }
+  h2 { font-size: 21px; margin: 44px 0 10px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 22px; }
+  .drop { border: 2px dashed var(--line); border-radius: 12px; padding: 40px 20px; text-align: center; cursor: pointer; transition: border-color .2s; }
+  .drop.over { border-color: var(--acc); }
+  .drop b { font-size: 16px; }
+  .drop p { color: var(--mut); margin: 6px 0 0; font-size: 13px; }
+  .bar { display: none; align-items: center; gap: 12px; flex-wrap: wrap; margin: 14px 0; }
+  .bar.show { display: flex; }
+  .bar .file { font-weight: 600; font-size: 14px; }
+  .bar label { color: var(--mut); font-size: 13px; }
+  select, button, textarea { font: inherit; }
+  select { background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 5px 10px; }
+  button { background: var(--acc); color: #fff; border: 0; border-radius: 8px; padding: 9px 18px; cursor: pointer; }
+  button:hover { background: var(--acc2); }
+  button.sec { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+  button.pro { background: var(--pro); }
+  .scrolly { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--card); margin-top: 14px; }
+  table { border-collapse: collapse; width: max-content; min-width: 100%; font-size: 13px; }
+  th, td { border: 1px solid var(--line); padding: 5px 10px; white-space: nowrap; text-align: left; }
+  thead th { position: sticky; top: 0; background: color-mix(in srgb, var(--acc) 14%, var(--card)); }
+  #llmtext { width: 100%; min-height: 240px; background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 14px; font: 13px/1.6 Consolas, "Courier New", monospace; white-space: pre; overflow: auto; }
+  .hint { color: var(--mut); font-size: 13px; margin-top: 10px; }
+  .ok { color: var(--acc); font-weight: 600; }
+  #msg { margin-top: 10px; }
+  .faq details { border-bottom: 1px solid var(--line); padding: 12px 0; }
+  .faq summary { cursor: pointer; font-weight: 600; }
+  .faq p { color: var(--mut); margin: 8px 0 0; }
+  .pro-card { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--pro); border-radius: 12px; padding: 20px 22px; }
+  .pro-card .price { font-size: 28px; font-weight: 750; }
+  .pro-card ul { color: var(--mut); padding-left: 18px; }
+  .grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-top: 16px; }
+  .grid3 .g { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+  .grid3 h3 { font-size: 15px; margin: 0 0 6px; }
+  .grid3 p { font-size: 14px; color: var(--mut); margin: 0; }
+  footer { border-top: 1px solid var(--line); margin-top: 60px; padding: 24px 0 40px; color: var(--mut); font-size: 13px; }
+  footer a { color: var(--mut); }
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <div class="brand">table<span>fmt</span></div>
+  <nav><a href="#tool">Tool</a><a href="#why">Why</a><a href="#faq">FAQ</a></nav>
+</div></header>
+
+<div class="wrap">
+  <section class="hero">
+    <h1>Your merged-header Excel is unreadable to ChatGPT.<br>Fix that in one drag.</h1>
+    <p class="lead">Merged cells and multi-level headers turn into blank holes and garbage rows when pasted into an LLM. tablefmt deconstructs the real structure — hierarchy, empty-value semantics and all — into markdown your AI can actually reason over.</p>
+    <div class="badges"><span>✓ Runs entirely in your browser</span><span>✓ Nothing uploaded</span><span>✓ Original file untouched</span><span>✓ Free</span></div>
+  </section>
+
+  <h2 id="tool">The tool</h2>
+  <div class="card">
+    <div class="drop" id="drop">
+      <b>Drop a .xlsx / .xls file here, or click to browse</b>
+      <p>Processed locally in your browser · no upload · no account · your original file is never modified</p>
+      <input type="file" id="file" accept=".xlsx,.xls" hidden>
+    </div>
+    <div class="bar" id="bar">
+      <span class="file" id="fname"></span>
+      <label>Header rows</label>
+      <select id="depth"></select>
+      <label>Sheet</label>
+      <select id="sheet"></select>
+      <button class="sec" id="reset">Reset</button>
+    </div>
+    <div id="msg" class="hint"></div>
+  </div>
+
+  <h2>① AI-readable markdown (copy this into ChatGPT / Claude with your question)</h2>
+  <div class="row">
+    <button id="copy-llm">Copy AI-readable markdown</button>
+    <span class="hint" id="copystate"></span>
+  </div>
+  <textarea id="llmtext" spellcheck="false" placeholder="Drop a spreadsheet above and this fills automatically."></textarea>
+
+  <h2>② Flattened preview</h2>
+  <div class="scrolly" id="preview" style="display:none"></div>
+
+  <h2>③ Export flattened .xlsx</h2>
+  <div class="row">
+    <button class="sec" id="export">Download flattened .xlsx</button>
+    <span class="hint">Only if you own the file and need a modified copy — for received documents, use the markdown output.</span>
+  </div>
+
+  <h2 id="why">Why your AI misreads your spreadsheet</h2>
+  <p>When you paste a real business spreadsheet into an LLM — the kind with a title row, a units line, a three-level merged header, and category columns merged down five rows — three things go wrong:</p>
+  <div class="grid3">
+    <div class="g"><h3>Merged cells become holes</h3><p>The anchor value survives; every covered cell turns blank. The model sees a table full of gaps and starts guessing.</p></div>
+    <div class="g"><h3>Multi-level headers collapse</h3><p>“本月发生 / 金额” and “本月发生 / 笔数” become two identical columns named after whichever fragment survived the paste.</p></div>
+    <div class="g"><h3>Empty means something</h3><p>A blank cell in a weekly-updated column isn’t missing data — it means “not updated yet”. Generic converters can’t tell your AI that.</p></div>
+  </div>
+  <p>tablefmt rebuilds the structure first — detects header depth, expands merges, maps the hierarchy — then emits markdown with hierarchy paths (<code>/</code>-separated) and empty-value annotations. Your original file is never touched.</p>
+
+  <h2>Pro (coming with batch support)</h2>
+  <div class="pro-card">
+    <span class="price">$4</span> <span style="color:var(--mut)">one-time</span>
+    <ul>
+      <li>Batch folder processing</li>
+      <li>Files beyond browser memory limits</li>
+      <li>Custom header-depth rules saved per template</li>
+      <li>Priority PDF table extraction</li>
+    </ul>
+    <button class="pro" id="pro-btn" disabled>Available at launch</button>
+  </div>
+
+  <h2 id="faq">FAQ</h2>
+  <div class="faq">
+    <details open><summary>Is my file uploaded anywhere?</summary><p>No. Parsing, restructuring and export all happen inside your browser using JavaScript. There is no server component in this tool at all.</p></details>
+    <details><summary>Does it modify my original file?</summary><p>Never. The output is markdown text (and an optional flattened .xlsx you explicitly download). Your original file stays exactly as it is — which matters when the file came from someone else.</p></details>
+    <details><summary>How is this different from a normal Excel-to-markdown converter?</summary><p>Generic converters dump cells — merged anchors survive, covered cells become holes, and multi-level headers turn into repeated fragments. tablefmt reads the merge ranges, reconstructs the hierarchy, resolves empty-value semantics, and annotates columns that look like periodic-summary fields.</p></details>
+    <details><summary>Does it use AI?</summary><p>No — and that’s the point. Deterministic rules mean the same file always produces the same output, offline, with zero token cost. The AI is on the other side of the paste: your ChatGPT or Claude reads the clean markdown.</p></details>
+  </div>
+
+  <footer>
+    <div>© <span id="year"></span> Shyue · <a href="https://github.com/TeryR">GitHub</a> · Built on the open-source Gewu engine concepts · AGPL</div>
+  </footer>
+</div>
+
+<script src="./xlsx.full.min.js"></script>
+<script src="./core.js"></script>
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const drop = $('drop'), file = $('file'), bar = $('bar'), depthSel = $('depth'),
+        sheetSel = $('sheet'), preview = $('preview'), msg = $('msg'), llmtext = $('llmtext');
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  let WB = null, cur = null;
+
+  drop.addEventListener('click', () => file.click());
+  drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
+  drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+  drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('over'); if (e.dataTransfer.files[0]) handle(e.dataTransfer.files[0]); });
+  file.addEventListener('change', () => { if (file.files[0]) handle(file.files[0]); });
+
+  function handle(f) {
+    say('Parsing ' + f.name + ' …');
+    const r = new FileReader();
+    r.onload = () => {
+      try {
+        WB = XLSX.read(new Uint8Array(r.result), { type: 'array' });
+        sheetSel.innerHTML = '';
+        WB.SheetNames.forEach(n => { const o = document.createElement('option'); o.value = n; o.textContent = n; sheetSel.appendChild(o); });
+        sheetSel.onchange = () => loadSheet(sheetSel.value);
+        loadSheet(WB.SheetNames[0]);
+      } catch (err) { say('Parse failed: ' + err.message); }
+    };
+    r.readAsArrayBuffer(f);
+  }
+
+  function loadSheet(name) {
+    const ws = WB.Sheets[name];
+    const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
+    if (!rows.length) { say('This sheet is empty.'); return; }
+    const merges = ws['!merges'] || [];
+    const t = FlattenCore.detectTitleRow(rows, merges);
+    const s = t.isTitle ? FlattenCore.stripTitleRow(rows, merges, t.startRow) : { rows, merges };
+    const d = FlattenCore.detectDepth(s.rows, s.merges);
+    cur = { rows: s.rows, merges: s.merges, depth: d, title: t.isTitle ? t.title : null };
+    bar.classList.add('show');
+    $('fname').textContent = name + ' (' + (rows.length - d) + ' data rows)';
+    depthSel.innerHTML = '';
+    const maxD = Math.min(Math.max(d + 2, 5), s.rows.length - 1);
+    for (let i = 1; i <= Math.max(maxD, d); i++) {
+      const o = document.createElement('option'); o.value = i; o.textContent = i + ' header row' + (i > 1 ? 's' : '');
+      if (i === d) o.selected = true; depthSel.appendChild(o);
+    }
+    render();
+    say('<span class="ok">Detected ' + d + ' header row' + (d > 1 ? 's' : '') + '.</span> Wrong? Adjust the count — output updates live.');
+  }
+
+  function render() {
+    if (!cur) return;
+    cur.depth = parseInt(depthSel.value, 10) || cur.depth;
+    const flat = FlattenCore.buildFlattened(cur.rows, cur.merges, cur.depth);
+    const empties = FlattenCore.emptyStats(cur.rows, cur.depth, flat[0].length);
+    llmtext.value = FlattenCore.toLLMContext(flat, cur.depth, empties, cur.title);
+    const maxRow = Math.min(flat.length, 30);
+    let h = '<table><thead><tr>';
+    flat[0].forEach(n => h += '<th>' + esc(String(n)) + '</th>');
+    h += '</tr></thead><tbody>';
+    for (let r = 1; r < maxRow; r++) {
+      h += '<tr>';
+      flat[r].forEach(v => h += '<td>' + esc(v == null ? '' : String(v)) + '</td>');
+      h += '</tr>';
+    }
+    h += '</tbody></table>';
+    preview.style.display = 'block';
+    preview.innerHTML = h;
+  }
+
+  depthSel.addEventListener('change', render);
+  $('copy-llm').addEventListener('click', async () => {
+    if (!llmtext.value) { $('copystate').textContent = 'Nothing to copy yet'; return; }
+    try { await navigator.clipboard.writeText(llmtext.value); $('copystate').textContent = '✓ Copied'; }
+    catch { llmtext.select(); document.execCommand('copy'); $('copystate').textContent = '✓ Copied'; }
+    setTimeout(() => $('copystate').textContent = '', 2000);
+  });
+  $('export').addEventListener('click', () => {
+    if (!cur) return;
+    const flat = FlattenCore.buildFlattened(cur.rows, cur.merges, cur.depth);
+    const ws = XLSX.utils.aoa_to_sheet(flat);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'flattened');
+    XLSX.writeFile(wb, 'flattened.xlsx');
+  });
+  $('reset').addEventListener('click', () => {
+    WB = null; cur = null; bar.classList.remove('show');
+    preview.style.display = 'none'; llmtext.value = ''; file.value = ''; say('');
+  });
+
+  function say(html) { msg.innerHTML = html || ''; }
+  function esc(s) { return s.replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch])); }
+})();
+</script>
+</body>
+</html>
