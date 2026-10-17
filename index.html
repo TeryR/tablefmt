@@ -115,7 +115,7 @@
   <p>When you paste a real business spreadsheet into an LLM — the kind with a title row, a units line, a three-level merged header, and category columns merged down five rows — three things go wrong:</p>
   <div class="grid3">
     <div class="g"><h3>Merged cells become holes</h3><p>The anchor value survives; every covered cell turns blank. The model sees a table full of gaps and starts guessing.</p></div>
-    <div class="g"><h3>Multi-level headers collapse</h3><p>“本月发生 / 金额” and “本月发生 / 笔数” become two identical columns named after whichever fragment survived the paste.</p></div>
+    <div class="g"><h3>Multi-level headers collapse</h3><p>“Marketing / Spend” and “Marketing / Deals” become two identical columns named after whichever fragment survived the paste.</p></div>
     <div class="g"><h3>Empty means something</h3><p>A blank cell in a weekly-updated column isn’t missing data — it means “not updated yet”. Generic converters can’t tell your AI that.</p></div>
   </div>
   <p>tablefmt rebuilds the structure first — detects header depth, expands merges, maps the hierarchy — then emits markdown with hierarchy paths (<code>/</code>-separated) and empty-value annotations. Your original file is never touched.</p>
